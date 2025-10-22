@@ -1,0 +1,7 @@
+{
+    "type": "module",
+    "dependencies": {
+        "octokit": "^5.0.4",
+        "string-similarity": "^4.0.4"
+    }
+}

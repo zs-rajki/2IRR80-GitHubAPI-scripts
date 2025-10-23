@@ -1,6 +1,7 @@
 {
     "type": "module",
     "dependencies": {
+        "dayjs": "^1.11.18",
         "octokit": "^5.0.4",
         "string-similarity": "^4.0.4"
     }

@@ -34,7 +34,7 @@ axes[0].legend(loc="upper left")
 axes[1].plot(df["month"], df["total_commits"], color="tab:blue",
              linestyle="-", linewidth=2, label="Total Commits")
 axes[1].set_ylabel("Total Commits")
-axes[1].set_title("Total Commits Over Time")
+axes[1].set_title("Total Commits Per Month")
 axes[1].legend(loc="upper left")
 
 # -----------------------------------------------------------
@@ -44,7 +44,7 @@ axes[2].plot(df["month"], df["mean_commits_per_contributor"], color="tab:red",
              linestyle="-", linewidth=2, label="Mean Commits per Contributor")
 axes[2].set_ylabel("Mean Commits per Contributor")
 axes[2].set_xlabel("Month")
-axes[2].set_title("Mean Monthly Commits per Contributor Over Time")
+axes[2].set_title("Mean Monthly Commits per Contributor")
 axes[2].legend(loc="upper left")
 
 # -----------------------------------------------------------

@@ -9,10 +9,28 @@ const owner = "anuraghazra";
 const repo = "github-readme-stats";
 
 // --------------------------------------------------------
-// 1. Average commits per contributor per month
+// 1. Time since last commit
 // --------------------------------------------------------
-async function getAverageCommitsPerContributorByMonth() {
-    console.log(`Fetching commits for ${owner}/${repo} ...`);
+async function getTimeSinceLastCommit() {
+    console.log(`\n=== [1] Time Since Last Commit ===`);
+    const { data: commits } = await octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        per_page: 1,
+    });
+    const lastCommitDate = dayjs(commits[0].commit.author.date);
+    const daysSince = dayjs().diff(lastCommitDate, "day");
+    console.log(
+        `Time since last commit: ${daysSince} days (${lastCommitDate.format("YYYY-MM-DD")})`
+    );
+    return daysSince;
+}
+
+// --------------------------------------------------------
+// 2 & 3. Unique contributors per month + Mean monthly commits per contributor
+// --------------------------------------------------------
+async function getContributorActivityByMonth() {
+    console.log(`\n=== [2 & 3] Monthly Contributor and Commit Activity ===`);
     const commits = await octokit.paginate(octokit.rest.repos.listCommits, {
         owner,
         repo,
@@ -38,48 +56,32 @@ async function getAverageCommitsPerContributorByMonth() {
             month,
             totalCommits: data.count,
             uniqueContributors: data.contributors.size,
-            avgCommitsPerContributor: (data.count / data.contributors.size).toFixed(2),
+            meanCommitsPerContributor: (data.count / data.contributors.size).toFixed(2),
         }));
 
     console.table(results);
 
-    const header = "month,total_commits,unique_contributors,avg_commits_per_contributor\n";
+    const header = "month,total_commits,unique_contributors,mean_commits_per_contributor\n";
     const csvData =
         header +
         results
             .map(
                 (r) =>
-                    `${r.month},${r.totalCommits},${r.uniqueContributors},${r.avgCommitsPerContributor}`
+                    `${r.month},${r.totalCommits},${r.uniqueContributors},${r.meanCommitsPerContributor}`
             )
             .join("\n");
 
-    const outputPath = "./average_commits_per_contributor.csv";
+    const outputPath = "./monthly_contributor_activity.csv";
     fs.writeFileSync(outputPath, csvData);
     console.log(`CSV file saved to ${outputPath}`);
+    return results;
 }
 
 // --------------------------------------------------------
-// 2. Time since last commit
-// --------------------------------------------------------
-async function getTimeSinceLastCommit() {
-    const { data: commits } = await octokit.rest.repos.listCommits({
-        owner,
-        repo,
-        per_page: 1,
-    });
-    const lastCommitDate = dayjs(commits[0].commit.author.date);
-    const daysSince = dayjs().diff(lastCommitDate, "day");
-    console.log(
-        `Time since last commit: ${daysSince} days (${lastCommitDate.format("YYYY-MM-DD")})`
-    );
-    return daysSince;
-}
-
-// --------------------------------------------------------
-// 3. Pull Request activity
+// 4. Pull Request activity
 // --------------------------------------------------------
 async function getPRActivity() {
-    console.log("Fetching Pull Requests...");
+    console.log(`\n=== [4] Pull Request Activity ===`);
     const prs = await octokit.paginate(octokit.rest.pulls.list, {
         owner,
         repo,
@@ -97,10 +99,10 @@ async function getPRActivity() {
 }
 
 // --------------------------------------------------------
-// 4. Issue activity
+// 5. Issue activity
 // --------------------------------------------------------
 async function getIssueActivity() {
-    console.log("Fetching Issues...");
+    console.log(`\n=== [5] Issue Activity ===`);
     const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
         owner,
         repo,
@@ -117,10 +119,10 @@ async function getIssueActivity() {
 }
 
 // --------------------------------------------------------
-// 5. Newcomer Retention (% of first-time contributors who return)
+// 6. Newcomer Retention (% of first-time contributors who return)
 // --------------------------------------------------------
 async function getNewcomerRetention() {
-    console.log("Calculating newcomer retention...");
+    console.log(`\n=== [6] Newcomer Retention ===`);
 
     const commits = await octokit.paginate(octokit.rest.repos.listCommits, {
         owner,
@@ -128,7 +130,6 @@ async function getNewcomerRetention() {
         per_page: 100,
     });
 
-    // Map contributors to their commit dates
     const contributorCommits = {};
     for (const c of commits) {
         const author = c.author?.login;
@@ -140,15 +141,10 @@ async function getNewcomerRetention() {
 
     let newcomers = 0;
     let retained = 0;
-
     for (const [author, dates] of Object.entries(contributorCommits)) {
         dates.sort((a, b) => a - b);
-        if (dates.length > 1) {
-            newcomers++;
-            retained++;
-        } else {
-            newcomers++;
-        }
+        newcomers++;
+        if (dates.length > 1) retained++;
     }
 
     const retentionPercent = ((retained / newcomers) * 100).toFixed(2);
@@ -161,13 +157,13 @@ async function getNewcomerRetention() {
 // --------------------------------------------------------
 (async () => {
     try {
-        console.log("=== Running Project Activity Metrics ===");
-        await getAverageCommitsPerContributorByMonth();
+        console.log("Running Project Activity Metrics...");
         await getTimeSinceLastCommit();
+        await getContributorActivityByMonth();
         await getPRActivity();
         await getIssueActivity();
         await getNewcomerRetention();
-        console.log("All metrics collected successfully.");
+        console.log("\nAll metrics collected successfully.");
     } catch (err) {
         console.error("Error fetching data:", err);
     }

@@ -3,8 +3,6 @@ import dayjs from "dayjs";
 import fs from "fs";
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-// === CONFIG ===
 const owner = "anuraghazra";
 const repo = "github-readme-stats";
 
